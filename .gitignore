@@ -1,0 +1,6 @@
+**/*.retry
+.env
+.envrc
+.vagrant
+.venv
+.vscode

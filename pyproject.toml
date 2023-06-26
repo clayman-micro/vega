@@ -1,0 +1,17 @@
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "vega"
+version = "0.1.0"
+description = "K8s cluster configuration"
+authors = ["Kirill Sumorokov <sumorokov.k@gmail.com>"]
+
+[tool.poetry.dependencies]
+ansible = "^5.0.0"
+ansible-lint = "^5.1.3"
+jinja2 = "^3.0.0"
+passlib = "^1.7.2"
+python = "^3.10"
+pyyaml = "^5.3.1"
