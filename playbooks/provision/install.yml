@@ -1,0 +1,81 @@
+---
+
+- hosts: all
+
+  vars:
+    timezone: 'Asia/Yekaterinburg'
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - binutils
+          - ca-certificates
+          - curl
+          - dnsutils
+          - g++
+          - gcc
+          - git
+          - gnupg
+          - iptables
+          - mc
+          - net-tools
+          - network-manager
+          - python3-passlib
+          - python3-pip
+          - python3-setuptools
+          - sudo
+          - tmux
+          - zsh
+        update_cache: yes
+
+    - name: Install python packages
+      pip:
+        name:
+          - jsondiff
+          - pyyaml
+          - openshift
+
+
+    - name: Install locales
+      locale_gen:
+        name: "{{ item }}"
+      loop:
+        - en_US.UTF-8
+        - ru_RU.UTF-8
+
+    - name: Generate locales
+      debconf:
+        name: locales
+        question: locales/locales_to_be_generated
+        value: en_US.UTF-8 UTF-8, ru_RU.UTF-8 UTF-8
+        vtype: multiselect
+
+    - name: Set default locale to ru_RU.UTF-8
+      debconf:
+        name: locales
+        question: locales/default_environment_locale
+        value: ru_RU.UTF-8
+        vtype: select
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ ansible_host }}"
+        use: systemd
+      when: "ansible_distribution == 'Debian'"
+
+    - name: Disable ipv6
+      ansible.posix.sysctl:
+        name: "{{ item }}"
+        value: '1'
+        state: present
+        reload: yes
+      loop:
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+
+
+    - name: Configure timezone
+      community.general.timezone:
+        name: "{{ timezone }}"
