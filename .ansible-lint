@@ -1,0 +1,6 @@
+skip_list:
+  - command-instead-of-shell
+
+warn_list:
+  - command-instead-of-module
+  - risky-shell-pipe
