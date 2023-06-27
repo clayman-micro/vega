@@ -1,0 +1,5 @@
+---
+
+- name: Include play to install libraries
+  ansible.builtin.import_playbook: install.yml
+

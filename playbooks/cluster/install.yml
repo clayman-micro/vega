@@ -1,0 +1,156 @@
+---
+
+- hosts: nodes
+  become: true
+
+  vars:
+    k8s_version: 1.26.3-00
+
+  handlers:
+    - name: Restart crio
+      ansible.builtin.systemd:
+        state: restarted
+        name: crio
+
+  tasks:
+    - name: Add libcontainers apt-key
+      shell: curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Debian_11/Release.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/libcontainers-archive-keyring.gpg
+      args:
+        creates: /etc/apt/trusted.gpg.d/libcontainers-archive-keyring.gpg
+
+    - name: Add libcontainers APT repository
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/etc/apt/trusted.gpg.d/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Debian_11/ /
+        state: present
+        filename: 'libcontainers'
+
+    - name: Add CRI-O apt-key
+      shell: curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.23/Debian_11/Release.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/libcontainers-crio-archive-keyring.gpg
+      args:
+        creates: /etc/apt/trusted.gpg.d/libcontainers-crio-archive-keyring.gpg
+
+    - name: Add CRI-O APT repository
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/etc/apt/trusted.gpg.d/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.23/Debian_11/ /
+        state: present
+        filename: 'crio'
+
+    - name: Install packages
+      apt:
+        name:
+          - cri-o
+          - cri-o-runc
+          - cri-tools
+        state: present
+        update_cache: true
+
+    - name: Assemble cri-o config
+      ansible.builtin.copy:
+        content: |
+          [crio.runtime]
+          conmon_cgroup = "pod"
+          cgroup_manager = "systemd"
+        dest: /etc/crio/crio.conf.d/02-cgroup-manager.conf
+        mode: 0644
+      notify:
+        - Restart crio
+
+
+    - name: Add Kubernetes apt-key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add Kubernetes APT repository
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+        filename: 'kubernetes'
+
+    - name: Unhold packages
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: install
+      loop:
+        - kubeadm
+        - kubectl
+        - kubelet
+
+    - name: Install packages
+      apt:
+        name:
+          - "kubeadm={{ k8s_version }}"
+          - "kubectl={{ k8s_version }}"
+          - "kubelet={{ k8s_version }}"
+        state: present
+        allow_downgrade: true
+        update_cache: true
+
+    - name: Hold packages
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubeadm
+        - kubectl
+        - kubelet
+
+
+    - name: Add modules
+      community.general.modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - overlay
+        - br_netfilter
+
+    - name: Update sysctl params
+      ansible.posix.sysctl:
+        name: "{{ item }}"
+        value: '1'
+        sysctl_set: yes
+      loop:
+        - net.bridge.bridge-nf-call-iptables
+        - net.bridge.bridge-nf-call-ip6tables
+        - net.ipv4.ip_forward
+
+
+- hosts: master
+  become: true
+
+  vars:
+    helm_version: 3.9.2-1
+
+  tasks:
+    - name: Add Helm apt-key
+      apt_key:
+        url: https://baltocdn.com/helm/signing.asc
+        state: present
+
+    - name: Add Helm APT repository
+      apt_repository:
+        repo: deb https://baltocdn.com/helm/stable/debian/ all main
+        state: present
+        filename: helm
+
+    - name: Unhold packages
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: install
+      loop:
+        - helm
+
+    - name: Install Helm
+      apt:
+        name:
+          - "helm={{ helm_version }}"
+        state: present
+        update_cache: yes
+
+    - name: Hold packages
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - helm
+
