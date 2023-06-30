@@ -5,3 +5,6 @@
 
 - name: Include play to bootstrap k8s cluster
   ansible.builtin.import_playbook: bootstrap.yml
+
+- name: Include play to install cluster network
+  ansible.builtin.import_playbook: network.yml

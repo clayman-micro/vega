@@ -1,0 +1,56 @@
+---
+
+- hosts: master
+  become: true
+
+  vars:
+
+    k8s_pod_network_cidr: 10.244.0.0/16
+
+  tasks:
+    - name: Prepare folder for CNI plugin
+      file: path=/opt/cni/bin mode=755 state=directory
+
+    - name: Download CNI plugin
+      get_url:
+        url: https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz
+        dest: /opt/cni/cni-plugins-linux-amd64-v1.2.0.tgz
+
+    - name: Install CNI plugin
+      ansible.builtin.unarchive:
+        src: /opt/cni/cni-plugins-linux-amd64-v1.2.0.tgz
+        dest: /opt/cni/bin
+        remote_src: yes
+
+
+    - name: Create namespace
+      kubernetes.core.k8s:
+        kind: Namespace
+        api_version: v1
+        name: kube-flannel
+        state: present
+
+    - name: Update namespace labels
+      kubernetes.core.k8s:
+        state: patched
+        kind: Namespace
+        name: kube-flannel
+        definition:
+          metadata:
+            labels:
+              pod-security.kubernetes.io/enforce: privileged
+
+    - name: Add stable chart repo
+      kubernetes.core.helm_repository:
+        name: flannel
+        repo_url: https://flannel-io.github.io/flannel/
+
+    - name: Deploy flannel
+      kubernetes.core.helm:
+        name: flannel
+        chart_ref: flannel/flannel
+        release_namespace: kube-flannel
+        update_repo_cache: yes
+        values:
+          podCidr: "{{ k8s_pod_network_cidr }}"
+
