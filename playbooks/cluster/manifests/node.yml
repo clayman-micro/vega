@@ -1,0 +1,11 @@
+---
+
+apiVersion: v1
+kind: Node
+metadata:
+  name: {{ hostvars[item]['ansible_nodename'] }}
+  labels:
+{% for label, value in hostvars[item]['labels'].items() %}
+    {{ label }}: "{{ value }}"
+{% endfor %}
+

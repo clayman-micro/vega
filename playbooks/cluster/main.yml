@@ -3,3 +3,5 @@
 - name: Include play to install libraries
   ansible.builtin.import_playbook: install.yml
 
+- name: Include play to bootstrap k8s cluster
+  ansible.builtin.import_playbook: bootstrap.yml

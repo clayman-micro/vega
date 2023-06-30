@@ -1,0 +1,72 @@
+---
+
+- hosts: master
+
+  vars:
+    k8s_pod_network_cidr: 10.244.0.0/16
+
+  tasks:
+    - name: Initialize the cluster
+      shell: "kubeadm init --pod-network-cidr={{ k8s_pod_network_cidr }} >> cluster_initialized.txt"
+      args:
+        chdir: $HOME
+        creates: cluster_initialized.txt
+      become: true
+
+    - name: Create .kube directory
+      file: path="$HOME/.kube" state=directory mode=0755
+      become: true
+
+    - name: Copy admin.conf to user's kube config
+      copy: src=/etc/kubernetes/admin.conf dest=$HOME/.kube/config remote_src=yes mode=0600
+      become: true
+
+    - name: Get join command
+      shell: kubeadm token create --print-join-command >> join_command.txt
+      args:
+        chdir: $HOME
+        creates: join_command.txt
+      become: true
+
+    - name: Download join_command
+      fetch:
+        src: $HOME/join_command.txt
+        dest: /tmp/join_command.txt
+        flat: yes
+
+
+- hosts: workers
+  become: true
+
+  tasks:
+    - name: Upload join_command
+      ansible.builtin.copy:
+        src: /tmp/join_command.txt
+        dest: /tmp/
+        owner: root
+        group: root
+        mode: u+rw,g-wx,o-rwx
+
+    - name: Join cluster
+      shell: "{{ lookup('file', '/tmp/join_command.txt') }}"  # noqa 305
+      args:
+        creates: /etc/kubernetes/kubelet.conf
+
+- hosts: master
+  become: true
+
+  tasks:
+    - name: Assemble node manifest
+      ansible.builtin.template:
+        src: manifests/node.yml
+        dest: "/tmp/{{ item }}.yml"
+        mode: '0644'
+      when: hostvars[item].get('labels', '')
+      loop: "{{ groups['workers'] }}"
+
+    - name: Apply worker node manifest
+      kubernetes.core.k8s:
+        state: present
+        src: "/tmp/{{ item }}.yml"
+      when: hostvars[item].get('labels', '')
+      loop: "{{ groups['workers'] }}"
