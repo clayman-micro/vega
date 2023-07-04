@@ -1,0 +1,17 @@
+- name: Deploy NFS provisioner
+  kubernetes.core.helm:
+    name: '{{ release_name }}'
+    chart_ref: "{{ chart }}"
+    release_namespace: "{{ release_namespace }}"
+    update_repo_cache: true
+    values:
+      nfs:
+        server: "{{ nfs_server }}"
+        path: "{{ nfs_storage_path }}"
+      storageClass:
+        create: true
+        name: "{{ nfs_storage_class.name }}"
+        reclaimPolicy: "{{ nfs_storage_class.reclaimPolicy }}"
+        archiveOnDelete: "{{ nfs_storage_class.archiveOnDelete }}"
+        accessModes: "{{ nfs_storage_class.accessModes }}"
+        volumeBindingMode: "{{ nfs_storage_class.volumeBindingMode }}"

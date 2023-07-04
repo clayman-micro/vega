@@ -1,0 +1,69 @@
+---
+
+- hosts: master
+  become: true
+
+  vars:
+    nfs_server_exports:
+      - export:
+        access:
+          - hostname: '{{ ansible_default_ipv4.address }}/24'
+            options:
+              - 'rw'
+              - 'sync'
+              - 'no_subtree_check'
+              - 'no_root_squash'
+        mode: "u=rwx,g=rx,o=rx"
+        path: '/var/local/k8s/storage'
+        owner: root
+        group: root
+
+  roles:
+    - role: nfs
+
+
+- hosts: workers
+  become: true
+
+  roles:
+    - role: iscsi
+
+  tasks:
+    - name: Install nfs client
+      apt:
+        name:
+          - nfs-common
+        state: present
+        update_cache: yes
+      tags:
+        - nfs
+
+
+    - name: Create storage file
+      community.general.filesize:
+        path: /var/storage.img
+        size: 40G
+        blocksize: 512B
+
+    - name: Create loopback device
+      shell:
+        cmd: losetup -fP /var/storage.img
+        creates: /dev/loop0
+
+
+- hosts: master
+  become: true
+
+  roles:
+    - role: nfs-provisioner
+      vars:
+        nfs_server: "{{ ansible_default_ipv4.address }}"
+        nfs_storage_path: /var/local/k8s/storage
+        nfs_storage_class:
+          name: nfs-csi
+          reclaimPolicy: Delete
+          archiveOnDelete: true
+          accessModes: ReadWriteMany
+          volumeBindingMode: WaitForFirstConsumer
+
+    - role: openebs

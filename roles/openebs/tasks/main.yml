@@ -1,0 +1,9 @@
+---
+
+- import_tasks: install.yml
+  tags:
+    - openebs
+
+- import_tasks: deploy.yml
+  tags:
+    - openebs

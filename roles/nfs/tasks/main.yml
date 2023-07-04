@@ -1,0 +1,23 @@
+---
+
+- import_tasks: install.yml
+  tags:
+    - nfs
+
+- name: Create folders for NFS share
+  file: path="{{ item['path'] }}" owner="{{ item['owner'] }}" group="{{ item['group'] }}" mode=755 state=directory
+  with_items: "{{ nfs_server_exports }}"
+  tags:
+    - nfs
+
+- name: config | Configuring /etc/exports
+  template:
+    src: "exports.j2"
+    dest: "/etc/exports"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=r,o=r"
+  become: true
+  notify: "reload nfs-server"
+  tags:
+    - nfs

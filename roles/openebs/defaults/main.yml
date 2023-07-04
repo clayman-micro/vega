@@ -1,0 +1,6 @@
+---
+
+repo: https://openebs.github.io/charts
+chart: openebs/openebs
+release_name: openebs
+release_namespace: openebs

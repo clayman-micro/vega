@@ -1,0 +1,18 @@
+---
+
+- name: Install iscsi libraries
+  apt:
+    name:
+      - open-iscsi
+    state: present
+    update_cache: yes
+
+- name: Enable iscsi service
+  ansible.builtin.systemd:
+    enabled: true
+    name: iscsid
+
+- name: Add iscsi module
+  community.general.modprobe:
+    name: iscsi_tcp
+    state: present

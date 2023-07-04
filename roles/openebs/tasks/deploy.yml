@@ -1,0 +1,16 @@
+---
+
+- name: Deploy OpenEBS
+  kubernetes.core.helm:
+    name: "{{ release_name }}"
+    chart_ref: "{{ chart }}"
+    release_namespace: "{{ release_namespace }}"
+    update_repo_cache: true
+    values:
+      cstor:
+        enabled: true
+      ndm:
+        enabled: true
+        filters:
+          includePaths: "/dev/loop"
+          excludePaths: "/dev/fd0,/dev/sr0,/dev/ram,/dev/dm-,/dev/md,/dev/rbd,/dev/zd"

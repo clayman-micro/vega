@@ -1,0 +1,8 @@
+---
+
+- name: Make sure nfs service unit is running
+  ansible.builtin.systemd:
+    state: restarted
+    name: nfs-server
+  become: true
+  listen: "reload nfs-server"

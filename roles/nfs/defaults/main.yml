@@ -1,0 +1,19 @@
+---
+
+nfs_server_exports: []
+  # - export:
+  #   access:
+  #     # - hostname: '172.16.24.0/24'
+  #     #   options:
+  #     #     - 'ro'
+  #     #     - 'sync'
+  #     #     - 'no_subtree_check'
+  #     #     - 'no_root_squash'
+  #     - hostname: '192.168.250.0/24'
+  #       options:
+  #         - 'rw'
+  #         - 'sync'
+  #         - 'no_subtree_check'
+  #         - 'no_root_squash'
+  #   mode: "u=rwx,g=rx,o=rx"
+  #   path: '/opt/nfs/test1'
