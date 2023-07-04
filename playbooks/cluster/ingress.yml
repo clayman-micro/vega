@@ -1,0 +1,9 @@
+---
+
+- hosts: master
+  become: true
+
+  roles:
+    - role: traefik
+      vars:
+        storage_class: nfs-csi

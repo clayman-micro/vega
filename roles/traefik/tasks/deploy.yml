@@ -1,0 +1,87 @@
+---
+
+- name: Deploy Traefik
+  kubernetes.core.helm:
+    name: "{{ release_name }}"
+    chart_ref: "{{ chart }}"
+    chart_version: "{{ chart_version }}"
+    release_namespace: "{{ release_namespace }}"
+    update_repo_cache: yes
+    values:
+      image:
+        name: "{{ image_name }}"
+        tag: "{{ image_version }}"
+
+      deployment:
+        enabled: true
+        kind: DaemonSet
+        initContainers:
+          - name: volume-permissions
+            image: busybox:1.31.1
+            command: ["sh", "-c", "chown -R 65532:65532 /data"]
+            volumeMounts:
+              - name: data
+                mountPath: /data
+
+      providers:
+        kubernetesCRD:
+          enabled: true
+
+      logs:
+        general:
+          level: ERROR
+        access:
+          # To enable access logs
+          enabled: true
+          format: json
+
+      ports:
+        # The name of this one can't be changed as it is used for the readiness and
+        # liveness probes, but you can adjust its config to your liking
+        traefik:
+          port: 9000
+          protocol: TCP
+        metrics:
+          port: 8080
+          protocol: TCP
+        web:
+          port: 8000
+          hostPort: 80
+          protocol: TCP
+        websecure:
+          port: 8443
+          hostPort: 443
+          protocol: TCP
+      service:
+        enabled: true
+        type: ClusterIP
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "50Mi"
+        limits:
+          cpu: "300m"
+          memory: "150Mi"
+      globalArguments:
+        - --api.insecure=true
+        - --certificatesresolvers.letsencrypt.acme.email={{ letsencrypt_email }}
+        - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json
+        - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      persistence:
+        enabled: true
+        name: data
+        accessMode: ReadWriteMany
+        size: 128Mi
+        storageClass: "{{ storage_class }}"
+        path: /data
+
+      securityContext:
+        capabilities:
+          drop: [ALL]
+        readOnlyRootFilesystem: false
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+
+      podSecurityContext:
+        fsGroup: 65532

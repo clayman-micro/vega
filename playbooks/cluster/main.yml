@@ -8,3 +8,9 @@
 
 - name: Include play to install cluster network
   ansible.builtin.import_playbook: network.yml
+
+- name: Include play to install cluster storage
+  ansible.builtin.import_playbook: storage.yml
+
+- name: Include play to install ingress controller
+  ansible.builtin.import_playbook: ingress.yml
