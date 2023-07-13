@@ -1,0 +1,118 @@
+- hosts: master
+  become: true
+
+  vars:
+    release_name: argo
+    release_namespace: argocd
+    repo: https://argoproj.github.io/argo-helm
+    chart: argo/argo-cd
+
+  tasks:
+    - name: Add namespace
+      kubernetes.core.k8s:
+        kind: Namespace
+        api_version: v1
+        name: "{{ release_namespace }}"
+        state: present
+
+    - name: Add stable chart repo
+      kubernetes.core.helm_repository:
+        name: "{{ release_name }}"
+        repo_url: "{{ repo }}"
+
+    - name: Deploy ArgoCD
+      kubernetes.core.helm:
+        name: "{{ release_name }}"
+        chart_ref: "{{ chart }}"
+        release_namespace: "{{ release_namespace }}"
+        update_repo_cache: yes
+        values:
+          configs:
+            params:
+              server.insecure: true
+
+    - name: Add redirect middleware
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: Middleware
+          metadata:
+            name: argocd-redirectscheme
+            namespace: "{{ release_namespace }}"
+          spec:
+            redirectScheme:
+              scheme: https
+              permanent: true
+
+    - name: Add insecure ingress route
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: argocd-insecure
+            namespace: "{{ release_namespace }}"
+          spec:
+            entryPoints:
+              - web
+            routes:
+              - kind: Rule
+                match: Host(`argocd.clayman.pro`)
+                middlewares:
+                  - name: argocd-redirectscheme
+                    namespace: "{{ release_namespace }}"
+                services:
+                  - kind: Service
+                    name: argo-argocd-server
+                    namespace: "{{ release_namespace }}"
+                    port: 80
+
+    - name: Add ingress route
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: argocd
+            namespace: "{{ release_namespace }}"
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - kind: Rule
+                match: Host(`argocd.clayman.pro`)
+                services:
+                  - kind: Service
+                    name: argo-argocd-server
+                    namespace: "{{ release_namespace }}"
+                    port: 80
+            tls:
+              certResolver: letsencrypt
+
+    - name: Add accounts
+      kubernetes.core.k8s:
+        state: patched
+        kind: ConfigMap
+        name: argocd-cm
+        namespace: "{{ release_namespace }}"
+        definition:
+          data:
+            accounts.github: apiKey, login
+
+    - name: Add RBAC policies
+      kubernetes.core.k8s:
+        state: patched
+        kind: ConfigMap
+        name: argocd-rbac-cm
+        namespace: "{{ release_namespace }}"
+        definition:
+          data:
+            policy.csv: |
+              p, role:org-admin, applications, *, */*, allow
+              p, role:org-admin, clusters, get, *, allow
+              p, role:org-admin, repositories, get, *, allow
+              p, role:org-admin, repositories, create, *, allow
+              p, role:org-admin, repositories, update, *, allow
+              p, role:org-admin, repositories, delete, *, allow
+              g, github, role:org-admin
+            policy.default: role:''
