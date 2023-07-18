@@ -1,0 +1,59 @@
+---
+
+- name: Add redirect middleware
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: traefik.containo.us/v1alpha1
+      kind: Middleware
+      metadata:
+        name: grafana-redirectscheme
+        namespace: "{{ release_namespace }}"
+      spec:
+        redirectScheme:
+          scheme: https
+          permanent: true
+
+- name: Add insecure ingress route
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: traefik.containo.us/v1alpha1
+      kind: IngressRoute
+      metadata:
+        name: grafana-insecure
+        namespace: "{{ release_namespace }}"
+      spec:
+        entryPoints:
+          - web
+        routes:
+          - kind: Rule
+            match: "{{ grafana_dashboard }}"
+            middlewares:
+              - name: grafana-redirectscheme
+                namespace: "{{ release_namespace }}"
+            services:
+              - kind: Service
+                name: grafana
+                namespace: "{{ release_namespace }}"
+                port: 80
+
+- name: Add ingress route
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: traefik.containo.us/v1alpha1
+      kind: IngressRoute
+      metadata:
+        name: dashboard
+        namespace: "{{ release_namespace }}"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - kind: Rule
+            match: "{{ grafana_dashboard }}"
+            services:
+              - kind: Service
+                name: grafana
+                namespace: "{{ release_namespace }}"
+                port: 80
+        tls:
+          certResolver: letsencrypt

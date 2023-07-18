@@ -1,0 +1,6 @@
+---
+
+release_name: prometheus-community
+release_namespace: monitoring
+repo: https://prometheus-community.github.io/helm-charts
+chart: prometheus-community/prometheus

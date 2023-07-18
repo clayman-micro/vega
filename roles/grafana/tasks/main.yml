@@ -1,0 +1,13 @@
+---
+
+- import_tasks: install.yml
+  tags:
+    - grafana
+
+- import_tasks: deploy.yml
+  tags:
+    - grafana
+
+- import_tasks: ingress.yml
+  tags:
+    - grafana

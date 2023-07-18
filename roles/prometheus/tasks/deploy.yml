@@ -1,0 +1,61 @@
+---
+
+- name: Deploy Prometheus stack
+  kubernetes.core.helm:
+    name: "prometheus"
+    chart_ref: "{{ chart }}"
+    release_namespace: "{{ release_namespace }}"
+    update_repo_cache: yes
+    values:
+      server:
+        global:
+          scrape_interval: 30s
+          scrape_timeout: 10s
+          evaluation_interval: 30s
+        nodeSelector:
+          node-role.kubernetes.io/monitoring: ""
+        persistentVolume:
+          size: 20Gi
+          storageClass: openebs-hostpath
+        retention: "30d"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+      alertmanager:
+        enabled: false
+        nodeSelector:
+          node-role.kubernetes.io/monitoring: ""
+        persistentVolume:
+          size: 2Gi
+          storageClass: openebs-hostpath
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      kube-state-metrics:
+        nodeSelector:
+          node-role.kubernetes.io/monitoring: ""
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      prometheus-node-exporter:
+        resources:
+          limits:
+            cpu: 200m
+            memory: 50Mi
+          requests:
+            cpu: 100m
+            memory: 30Mi
+      prometheus-pushgateway:
+        enabled: false

@@ -1,0 +1,13 @@
+---
+
+- import_tasks: install.yml
+  tags:
+    - loki
+
+- import_tasks: deploy.yml
+  tags:
+    - loki
+
+- import_tasks: promtail.yml
+  tags:
+    - loki

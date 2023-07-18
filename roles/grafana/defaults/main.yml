@@ -1,0 +1,6 @@
+---
+
+release_name: grafana
+release_namespace: monitoring
+repo: https://grafana.github.io/helm-charts
+chart: grafana/grafana

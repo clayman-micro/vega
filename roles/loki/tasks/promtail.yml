@@ -1,0 +1,16 @@
+---
+
+- name: Deploy Promtail
+  kubernetes.core.helm:
+    name: promtail
+    chart_ref: grafana/promtail
+    release_namespace: "{{ release_namespace }}"
+    update_repo_cache: yes
+    values:
+      resources:
+        limits:
+          cpu: 200m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi

@@ -1,0 +1,64 @@
+---
+
+- name: Deploy Loki
+  kubernetes.core.helm:
+    name: loki
+    chart_ref: "{{ chart }}"
+    release_namespace: "{{ release_namespace }}"
+    update_repo_cache: yes
+    values:
+      loki:
+        auth_enabled: false
+        commonConfig:
+          replication_factor: 3
+        storage:
+          bucketNames:
+            chunks: logs
+          type: s3
+          s3:
+            s3: null
+            endpoint: "{{ loki_s3_endpoint }}"
+            region: null
+            accessKeyId: "{{ loki_s3_access_key }}"
+            secretAccessKey: "{{ loki_s3_secret_key }}"
+            s3ForcePathStyle: true
+            insecure: true
+      singleBinary:
+        replicas: 3
+        persistence:
+          size: 10Gi
+          storageClass: openebs-hostpath
+      monitoring:
+        dashboards:
+          enabled: true
+          namespace: "{{ release_namespace }}"
+        rules:
+          enabled: true
+          alerting: true
+          namespace: "{{ release_namespace }}"
+        serviceMonitor:
+          enabled: true
+        lokiCanary:
+          enabled: true
+      backend:
+        replicas: 1
+        nodeSelector:
+          node-role.kubernetes.io/monitoring: ""
+        persistence:
+          size: 10Gi
+          storageClass: openebs-hostpath
+      write:
+        replicas: 1
+        nodeSelector:
+          node-role.kubernetes.io/monitoring: ""
+        persistence:
+          size: 10Gi
+          storageClass: openebs-hostpath
+      read:
+        replicas: 1
+        nodeSelector:
+          node-role.kubernetes.io/monitoring: ""
+        persistence:
+          size: 10Gi
+          storageClass: openebs-hostpath
+
