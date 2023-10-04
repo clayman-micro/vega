@@ -1,0 +1,11 @@
+---
+
+- name: Deploy metrics server
+  kubernetes.core.helm:
+    name: metrics-server
+    chart_ref: "{{ chart }}"
+    release_namespace: "{{ release_namespace }}"
+    update_repo_cache: yes
+    values:
+      args:
+        - "--kubelet-insecure-tls"

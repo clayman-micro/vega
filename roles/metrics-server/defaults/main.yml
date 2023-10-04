@@ -1,0 +1,6 @@
+---
+
+release_name: metrics-server
+release_namespace: metrics-server
+repo: https://kubernetes-sigs.github.io/metrics-server/
+chart: metrics-server/metrics-server
