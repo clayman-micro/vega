@@ -1,0 +1,42 @@
+---
+
+- name: Create namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ item['name'] }}"
+    state: present
+  loop: "{{ namespaces }}"
+  become: true
+
+- name: Create service account
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: "{{ service_account }}"
+        namespace: "{{ item['name'] }}"
+  loop: "{{ namespaces }}"
+  become: true
+
+- name: Assemble dockerconfig.json
+  ansible.builtin.template:
+    src: ./templates/registry.j2
+    dest: /tmp/dockerconfig.json
+    mode: '0644'
+  delegate_to: localhost
+
+- name: Add private registry
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ registry_secret_name }}"
+        namespace: "{{ item['name'] }}"
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: "{{ lookup('file', '/tmp/dockerconfig.json') | b64encode }}"
+  with_items: "{{ namespaces }}"
+  become: true

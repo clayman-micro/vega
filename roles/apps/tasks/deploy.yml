@@ -1,0 +1,8 @@
+---
+
+- name: Deploy apps
+  kubernetes.core.k8s:
+    state: present
+    template: ./templates/application_set.j2
+  when: item['apps']
+  loop: "{{ namespaces }}"

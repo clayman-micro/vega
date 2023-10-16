@@ -1,0 +1,41 @@
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ item['name'] }}-apps
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      {% for app_name in item['apps'] -%}
+        - app: {{ app_name }}
+      {% endfor %}
+
+  template:
+    metadata:
+      name: '{% raw %}{{ app }}{% endraw %}-{{ item['env'] }}'
+      namespace: argocd
+    spec:
+      project: default
+
+      destination:
+        namespace: {{ item['name'] }}
+        server: 'https://kubernetes.default.svc'
+
+      source:
+        path: charts/micro
+        repoURL: 'https://github.com/clayman-micro/helm-chart.git'
+        targetRevision: HEAD
+
+        helm:
+          releaseName: '{% raw %}{{ app }}{% endraw %}'
+
+          valueFiles:
+            - '../../apps/{% raw %}{{ app }}{% endraw %}/{{ item['env'] }}.yml'
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
