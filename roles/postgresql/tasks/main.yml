@@ -1,0 +1,13 @@
+---
+
+- import_tasks: deploy.yml
+  tags:
+    - postgresql
+
+- import_tasks: users.yml
+  tags:
+    - postgresql
+
+- import_tasks: databases.yml
+  tags:
+    - postgresql

@@ -1,0 +1,11 @@
+---
+
+postgres_image: postgres:16-alpine
+postgres_container_name: postgres
+postgres_user: postgres
+postgres_password: postgres
+postgres_db: postgres
+postgres_port: 5432
+
+postgres_users: []
+postgres_databases: []

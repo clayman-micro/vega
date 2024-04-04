@@ -1,0 +1,17 @@
+---
+
+- name: Add user
+  community.postgresql.postgresql_user:
+    name: "{{ item.value.name }}"
+    # password: "md5{{ (item.value.password + item.value.name) | md5 }}"
+    password: "{{ item.value.password }}"
+    role_attr_flags: CREATEDB,NOSUPERUSER
+    login_host: "localhost"
+    login_user: "{{ postgres_user }}"
+    login_password: "{{ postgres_password }}"
+    login_port: "{{ postgres_port }}"
+  environment:
+    PGOPTIONS: "-c password_encryption=scram-sha-256"
+  loop: "{{ postgres_users | dict2items }}"
+  loop_control:
+    label: "{{ item.value.name }}"
