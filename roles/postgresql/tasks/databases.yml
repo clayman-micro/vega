@@ -1,6 +1,6 @@
 ---
 
-- name: Add user
+- name: Add database
   community.postgresql.postgresql_db:
     name: "{{ item.value.name }}"
     owner: "{{ item.value.owner }}"
