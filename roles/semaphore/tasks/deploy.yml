@@ -1,0 +1,47 @@
+---
+
+- name: Deploy Semaphore
+  community.docker.docker_compose:
+    project_name: semaphore
+    definition:
+      version: "3.6"
+      services:
+        semaphore:
+          image: "{{ semaphore_image }}"
+          container_name: "{{ semaphore_container_name }}"
+          labels:
+            - "traefik.enable=true"
+            - "traefik.http.services.semaphore.loadbalancer.server.port=3000"
+            - "traefik.http.middlewares.semaphore-redirectscheme.redirectscheme.scheme=https"
+            - "traefik.http.middlewares.semaphore-redirectscheme.redirectscheme.permanent=true"
+            - "traefik.http.routers.semaphore-insecure.rule=Host(`{{ semaphore_domain }}`)"
+            - "traefik.http.routers.semaphore-insecure.entrypoints=web"
+            - "traefik.http.routers.semaphore-insecure.middlewares=semaphore-redirectscheme@docker"
+            - "traefik.http.routers.semaphore.rule=Host(`{{ semaphore_domain }}`)"
+            - "traefik.http.routers.semaphore.entrypoints=websecure"
+            - "traefik.http.routers.semaphore.tls.certresolver=le"
+          environment:
+            SEMAPHORE_DB: "{{ semaphore_db }}"
+            SEMAPHORE_DB_USER: "{{ semaphore_db_user }}"
+            SEMAPHORE_DB_PASS: "{{ semaphore_db_password }}"
+            SEMAPHORE_DB_HOST: "{{ semaphore_db_host }}"
+            SEMAPHORE_DB_PORT: "{{ semaphore_db_port | int }}"
+            SEMAPHORE_DB_DIALECT: postgres
+            SEMAPHORE_ADMIN_NAME: "{{ semaphore_admin_name }}"
+            SEMAPHORE_ADMIN_PASSWORD: "{{ semaphore_admin_password }}"
+            SEMAPHORE_ADMIN_EMAIL: "{{ semaphore_admin_email }}"
+            SEMAPHORE_ADMIN: admin
+            SEMAPHORE_ACCESS_KEY_ENCRYPTION: "{{ semaphore_access_key }}"
+          networks:
+            - proxy
+          restart: always
+          volumes:
+            - config:/etc/semaphore
+            - data:/var/lib/semaphore
+      networks:
+        proxy:
+          external:
+            name: "{{ proxy_network }}"
+      volumes:
+        config:
+        data:

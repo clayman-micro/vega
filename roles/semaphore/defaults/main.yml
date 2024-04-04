@@ -1,0 +1,20 @@
+---
+
+proxy_network: proxy
+
+semaphore_image: semaphoreui/semaphore:v2.8.90
+semaphore_container_name: semaphore
+
+semaphore_domain: semaphore.clayman.pro
+
+semaphore_db: semaphore
+semaphore_db_user: semaphore
+semaphore_db_password: semaphore
+semaphore_db_host: semaphore
+semaphore_db_port: semaphore
+
+semaphore_admin_name: admin
+semaphore_admin_password: top_secret
+semaphore_admin_email: john_doe@example.com
+
+semaphore_access_key: access_key
