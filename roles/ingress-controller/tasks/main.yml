@@ -1,0 +1,13 @@
+---
+
+- import_tasks: install.yml
+  tags:
+    - traefik
+
+- import_tasks: deploy.yml
+  tags:
+    - traefik
+
+- import_tasks: ingress.yml
+  tags:
+    - traefik

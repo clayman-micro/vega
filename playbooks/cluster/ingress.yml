@@ -4,6 +4,6 @@
   become: true
 
   roles:
-    - role: traefik
+    - role: ingress-controller
       vars:
         storage_class: nfs-csi

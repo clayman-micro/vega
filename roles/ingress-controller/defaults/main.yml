@@ -1,0 +1,14 @@
+---
+
+repo: https://helm.traefik.io/traefik
+release_namespace: traefik
+release_name: traefik
+chart: traefik/traefik
+chart_version: 21.2.0
+
+letsencrypt_email: johndoe@example.com
+
+image_name: traefik
+image_version: v2.9.8
+
+storage_class: nfs-client
