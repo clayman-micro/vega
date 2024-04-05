@@ -1,0 +1,44 @@
+---
+
+- name: Deploy Gitea
+  community.docker.docker_compose:
+    project_name: gitea
+    definition:
+      version: "3.6"
+      services:
+        gitea:
+          image: "{{ gitea_image }}"
+          container_name: "{{ gitea_container_name }}"
+          labels:
+            - "traefik.enable=true"
+            - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+            - "traefik.http.middlewares.gitea-redirectscheme.redirectscheme.scheme=https"
+            - "traefik.http.middlewares.gitea-redirectscheme.redirectscheme.permanent=true"
+            - "traefik.http.routers.gitea-insecure.rule=Host(`{{ gitea_domain }}`)"
+            - "traefik.http.routers.gitea-insecure.entrypoints=web"
+            - "traefik.http.routers.gitea-insecure.middlewares=gitea-redirectscheme@docker"
+            - "traefik.http.routers.gitea.rule=Host(`{{ gitea_domain }}`)"
+            - "traefik.http.routers.gitea.entrypoints=websecure"
+            - "traefik.http.routers.gitea.tls.certresolver=le"
+          environment:
+            - "USER_UID=1000"
+            - "USER_GID=1000"
+            - "DISABLE_REGISTRATION=1"
+            - "GITEA__database__DB_TYPE=postgres"
+            - "GITEA__database__HOST={{ gitea_db_host }}:{{ gitea_db_port }}"
+            - "GITEA__database__NAME={{ gitea_db }}"
+            - "GITEA__database__USER={{ gitea_db_user }}"
+            - "GITEA__database__PASSWD={{ gitea_db_password }}"
+          networks:
+            - proxy
+          ports:
+            - "{{ gitea_ssh_port }}:22"
+          restart: always
+          volumes:
+            - data:/data
+            - /etc/localtime:/etc/localtime:ro
+      networks:
+        proxy:
+          name: "{{ proxy_network }}"
+      volumes:
+        data:
