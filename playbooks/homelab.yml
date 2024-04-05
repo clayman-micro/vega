@@ -1,0 +1,64 @@
+---
+
+- hosts: homelab
+
+  vars:
+    postgres_port: 15432
+    postgres_password: postgres
+
+    postgres_users:
+      gitea:
+        name: "{{ gitea_db_user }}"
+        password: "{{ gitea_db_password }}"
+      semaphore:
+        name: "{{ semaphore_db_user }}"
+        password: "{{ semaphore_db_password }}"
+
+    postgres_databases:
+      gitea:
+        name: "{{ gitea_db }}"
+        owner: "{{ postgres_users.gitea.name }}"
+      semaphore:
+        name: "{{ semaphore_db }}"
+        owner: "{{ postgres_users.semaphore.name }}"
+
+    proxy_network: traefik_default
+
+    gitea_domain: "{{ lookup('ansible.builtin.env', 'GITEA_DOMAIN') }}"
+
+    gitea_db: "{{ lookup('ansible.builtin.env', 'GITEA_DB') }}"
+    gitea_db_user: "{{ lookup('ansible.builtin.env', 'GITEA_DB_USER') }}"
+    gitea_db_password: "{{ lookup('ansible.builtin.env', 'GITEA_DB_PASS') }}"
+    gitea_db_host: "{{ lookup('ansible.builtin.env', 'GITEA_DB_HOST') }}"
+    gitea_db_port: "{{ lookup('ansible.builtin.env', 'GITEA_DB_PORT') | int }}"
+
+    semaphore_domain: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_DOMAIN') }}"
+
+    semaphore_db: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_DB') }}"
+    semaphore_db_user: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_DB_USER') }}"
+    semaphore_db_password: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_DB_PASS') }}"
+    semaphore_db_host: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_DB_HOST') }}"
+    semaphore_db_port: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_DB_PORT') | int }}"
+
+    semaphore_admin_name: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_ADMIN_NAME') }}"
+    semaphore_admin_password: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_ADMIN_PASSWORD') }}"
+    semaphore_admin_email: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_ADMIN_EMAIL') }}"
+
+    semaphore_access_key: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_ACCESS_KEY_ENCRYPTION') }}"
+
+    traefik_le_email: "{{ lookup('ansible.builtin.env', 'TRAEFIK_LE_EMAIL') }}"
+    traefik_web_port: "{{ lookup('ansible.builtin.env', 'TRAEFIK_WEB_PORT') | int }}"
+    traefik_websecure_port: "{{ lookup('ansible.builtin.env', 'TRAEFIK_WEBSECURE_PORT') | int }}"
+
+  pre_tasks:
+    - name: Install python library
+      pip: name={{ item }}
+      loop:
+        - docker
+        - docker-compose
+
+  roles:
+    - role: postgresql
+    - role: traefik
+    - role: semaphore
+    - role: gitea
