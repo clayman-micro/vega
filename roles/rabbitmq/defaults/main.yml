@@ -1,0 +1,14 @@
+---
+
+proxy_network: proxy
+
+rabbitmq_image: rabbitmq:3-management-alpine
+rabbitmq_container_name: rabbitmq
+rabbitmq_hostname: rabbitmq
+
+rabbitmq_user: rabbit
+rabbitmq_password: rabbit
+
+rabbitmq_port: 5672
+
+rabbitmq_domain: rabbit.clayman.pro

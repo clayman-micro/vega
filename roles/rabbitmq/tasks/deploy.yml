@@ -1,0 +1,41 @@
+---
+
+- name: Deploy RabbitMQ server
+  community.docker.docker_compose:
+    project_name: rabbitmq
+    definition:
+      version: "3.6"
+      services:
+        broker:
+          image: "{{ rabbitmq_image }}"
+          container_name: "{{ rabbitmq_container_name }}"
+          hostname: "{{ rabbitmq_hostname }}"
+          environment:
+            RABBITMQ_DEFAULT_USER: "{{ rabbitmq_user }}"
+            RABBITMQ_DEFAULT_PASS: "{{ rabbitmq_password }}"
+          labels:
+            - "traefik.enable=true"
+            - "traefik.http.services.rabbitmq.loadbalancer.server.port=15672"
+            - "traefik.http.middlewares.rabbitmq-redirectscheme.redirectscheme.scheme=https"
+            - "traefik.http.middlewares.rabbitmq-redirectscheme.redirectscheme.permanent=true"
+            - "traefik.http.routers.rabbitmq-insecure.rule=Host(`{{ rabbitmq_domain }}`)"
+            - "traefik.http.routers.rabbitmq-insecure.entrypoints=web"
+            - "traefik.http.routers.rabbitmq-insecure.middlewares=semaphore-redirectscheme@docker"
+            - "traefik.http.routers.rabbitmq.rule=Host(`{{ rabbitmq_domain }}`)"
+            - "traefik.http.routers.rabbitmq.entrypoints=websecure"
+            - "traefik.http.routers.rabbitmq.tls.certresolver=le"
+          networks:
+            - proxy
+          restart: always
+          ports:
+            - "{{ rabbitmq_port }}:5672"
+          volumes:
+             - data:/var/lib/rabbitmq
+             - log:/var/log/rabbitmq
+      networks:
+        proxy:
+          external:
+            name: "{{ proxy_network }}"
+      volumes:
+        log:
+        data:

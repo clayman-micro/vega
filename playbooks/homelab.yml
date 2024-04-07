@@ -24,6 +24,13 @@
 
     proxy_network: traefik_default
 
+    rabbitmq_hostname: "{{ lookup('ansible.builtin.env', 'RABBITMQ_HOSTNAME') }}"
+
+    rabbitmq_user: "{{ lookup('ansible.builtin.env', 'RABBITMQ_USER') }}"
+    rabbitmq_password: "{{ lookup('ansible.builtin.env', 'RABBITMQ_PASSWORD') }}"
+
+    rabbitmq_domain: "{{ lookup('ansible.builtin.env', 'RABBITMQ_DOMAIN') }}"
+
     gitea_domain: "{{ lookup('ansible.builtin.env', 'GITEA_DOMAIN') }}"
 
     gitea_db: "{{ lookup('ansible.builtin.env', 'GITEA_DB') }}"
@@ -59,6 +66,7 @@
 
   roles:
     - role: postgresql
+    - role: rabbitmq
     - role: traefik
     - role: semaphore
     - role: gitea
