@@ -1,0 +1,11 @@
+---
+
+proxy_network: proxy
+
+minio_image: quay.io/minio/minio
+minio_container_name: minio
+
+minio_user: admin
+minio_password: admin
+
+minio_console_port: 9001

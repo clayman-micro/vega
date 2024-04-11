@@ -24,6 +24,11 @@
 
     proxy_network: traefik_default
 
+    minio_user: "{{ lookup('ansible.builtin.env', 'MINIO_USER') }}"
+    minio_password: "{{ lookup('ansible.builtin.env', 'MINIO_PASSWORD') }}"
+
+    minio_domain: "{{ lookup('ansible.builtin.env', 'MINIO_DOMAIN') }}"
+
     rabbitmq_hostname: "{{ lookup('ansible.builtin.env', 'RABBITMQ_HOSTNAME') }}"
 
     rabbitmq_user: "{{ lookup('ansible.builtin.env', 'RABBITMQ_USER') }}"
@@ -67,6 +72,7 @@
   roles:
     - role: postgresql
     - role: rabbitmq
+    - role: minio
     - role: traefik
     - role: semaphore
     - role: gitea
